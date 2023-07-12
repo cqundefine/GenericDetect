@@ -32,6 +32,7 @@
  * 
  * Supported compilers:
  *  - Clang:            GD_COMPILER_CLANG
+ *  - CodeWarrior:      GD_COMPILER_CODEWARRIOR
  *  - GCC:              GD_COMPILER_GCC
  *  - Green Hill C/C++: GD_COMPILER_GREEN_HILL
  *  - ICC:              GD_COMPILER_ICC
@@ -52,30 +53,44 @@
  * system as a parameter, e.g. GD_IS_OS(SOLARIS) to check for solaris.
  * 
  * Supported operating systems:
- *  - AIX:           GD_OS_AIX
- *  - Android:       GD_OS_ANDROID
- *  - DragonFly BSD: GD_OS_DRAGONFLY
- *  - FreeBSD:       GD_OS_FREEBSD
- *  - GNU/Hurd:      GD_OS_HURD
- *  - illumos:       GD_OS_ILLUMOS
- *  - Linux:         GD_OS_LINUX
- *  - MacOS:         GD_OS_MACOS
- *  - MS-DOS:        GD_OS_MSDOS
- *  - NetBSD:        GD_OS_NETBSD
- *  - OpenBSD:       GD_OS_OPENBSD
- *  - SerenityOS:    GD_OS_SERENITY
- *  - Solaris:       GD_OS_SOLARIS
- *  - SunOS:         GD_OS_SUNOS
- *  - Windows:       GD_OS_WINDOWS
+ *  - 386BSD:           GD_OS_386BSD
+ *  - AIX:              GD_OS_AIX
+ *  - Amiga Unix:       GD_OS_AMIX
+ *  - Android:          GD_OS_ANDROID
+ *  - DragonFly BSD:    GD_OS_DRAGONFLY
+ *  - FreeBSD:          GD_OS_FREEBSD
+ *  - GNU/Hurd:         GD_OS_HURD
+ *  - HP-UX:            GD_OS_HPUX
+ *  - illumos:          GD_OS_ILLUMOS
+ *  - iOS:              GD_OS_IOS
+ *  - IPhone Simulator: GD_OS_IPHONE_SIMULATOR
+ *  - IRIX:             GD_OS_IRIX
+ *  - Linux:            GD_OS_LINUX
+ *  - Mac Catalyst:     GD_OS_MACCATALYST
+ *  - MacOS:            GD_OS_MACOS
+ *  - MINIX:            GD_OS_MINIX
+ *  - MS-DOS:           GD_OS_MSDOS
+ *  - NetBSD:           GD_OS_NETBSD
+ *  - NeXTSTEP:         GD_OS_NEXTSTEP
+ *  - OpenBSD:          GD_OS_OPENBSD
+ *  - OS/2:             GD_OS_OS2
+ *  - Plan 9:           GD_OS_PLAN9
+ *  - SerenityOS:       GD_OS_SERENITY
+ *  - Solaris:          GD_OS_SOLARIS
+ *  - SunOS:            GD_OS_SUNOS
+ *  - Windows:          GD_OS_WINDOWS
  * 
  * Additional generic operating system defines:
  *  - Generic Unix (GD_OS_GENERIC_UNIX) defined by:
- *    - AIX, Android, DragonFly BSD, FreeBSD, GNU/Hurd, illumos, Linux, MacOS,
- *      NetBSD, OpenBSD, SerenityOS, Solaris, SunOS, others if __unix__ is defined
+ *    - AIX, Amiga Unix, Android, DragonFly BSD, FreeBSD, GNU/Hurd, HP-UX, illumos,
+ *      IRIX, Linux, MacOS, MINIX, NetBSD, NeXTSTEP, OpenBSD, Plan 9, SerenityOS, Solaris,
+ *      SunOS, others if __unix__ is defined
  *  - Generic BSD (GD_OS_GENERIC_BSD) defined by:
- *    - DragonFly BSD, FreeBSD, NetBSD, OpenBSD
+ *    - 386BSD, DragonFly BSD, FreeBSD, NetBSD, OpenBSD
  *  - Generic Sun (GD_OS_GENERIC_SUN) defined by:
  *    - illumos, Solaris, SunOS
+ *  - Generic Apple (GD_OS_GENERIC_APPLE) defined by:
+ *    - iOS, IPhone Simulator, Mac Catalyst, MacOS
  * 
  * Similarly as with the compiler there is a GD_OS_NAME macro.
  * 
@@ -87,9 +102,16 @@
  *  - AArch64:      GD_ARCH_AARCH64
  *  - Alpha:        GD_ARCH_ALPHA
  *  - ARM:          GD_ARCH_ARM
+ *  - HPPA:         GD_ARCH_HPPA
  *  - Itanium:      GD_ARCH_ITANIUM
+ *  - LoongArch:    GD_ARCH_LOONGARCH
  *  - MIPS:         GD_ARCH_MIPS
+ *    - MIPS:       GD_ARCH_MIPS32
+ *    - MIPS64:     GD_ARCH_MIPS64
  *  - Motorola 68k: GD_ARCH_M68K
+ *  - PowerPC:      GD_ARCH_POWERPC
+ *    - PowerPC:    GD_ARCH_POWERPC32
+ *    - PowerPC64:  GD_ARCH_POWERPC64
  *  - RISC-V:       GD_ARCH_RISCV
  *    - RISC-V 32:  GD_ARCH_RISCV32
  *    - RISC-V 64:  GD_ARCH_RISCV64
@@ -106,12 +128,14 @@
  * For some architectures there are GD_ARCH_VERSION and GD_ARCH_VERSION_NAME
  * macros defined. Their values are architecture specific.
  * 
+ * For detecting the bit count of a architecture you can use the GD_BITS macro.
+ * 
  * Library options:
  *  - GD_ANDROID_IS_NOT_LINUX - do not define GD_OS_LINUX if building for Android
- *    - Default value: 0
  *  - GD_NO_CUSTOM_WARNINGS - do not use #warning as some compilers / standards
  *    do not support it
- *    - Default value: 0
+ *  - GD_NO_EXTERNAL_INCLUDES - do not include any external headers, might cause
+ *    inaccuracies and inability to detect some platfors
  */
 
 #ifndef GENERIC_DETECT_H_
@@ -129,6 +153,11 @@
     #define GD_NO_CUSTOM_WARNINGS 0
 #endif
 
+/* Do not use #include */
+#ifndef GD_NO_EXTERNAL_INCLUDES
+    #define GD_NO_EXTERNAL_INCLUDES 0
+#endif
+
 /* Compiler detection */
 
 #define GD_IS_COMPILER(compiler) (defined(GD_COMPILER_##compiler))
@@ -142,6 +171,22 @@
     #define GD_COMPILER_CLANG
     #define GD_COMPILER_NAME "Clang"
     #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__clang_major__, __clang_minor__, __clang_patchlevel__)
+#endif
+
+#if defined(__MWERKS__) || defined(__CWCC__) /* CodeWarrior */
+    #define GD_COMPILER_CODEWARRIOR
+    #define GD_COMPILER_NAME "CodeWarrior"
+    #if __MWERKS__ == 1
+        #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(1, 0, 0)
+    #else
+        #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__MWERKS__ >> 24, (__MWERKS__ >> 16) & 8, __MWERKS__ & 16)
+    #endif
+#endif
+
+#ifdef __DMC__ /* Digital Mars */
+    #define GD_COMPILER_DIGITALMARS
+    #define GD_COMPILER_NAME "Digital Mars"
+    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__DMC__ >> 16, (__DMC__ >> 8) & 8, __DMC__ & 8)
 #endif
 
 #ifdef __ghs__ /* Green Hill C/C++ */
@@ -197,14 +242,31 @@
     #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(1, 0, 0)
 #endif
 
+#ifndef GD_COMPILER_VERSION
+    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(1, 0, 0)
+#endif
+
 /* OS detection */
 
 #define GD_IS_OS(os) (defined(GD_OS_##os))
 
-#if defined(_AIX) || defined(__TOS_AIX__)
+#if defined(____386BSD____) || defined(__386BSD__) /* 386BSD */
+    #define GD_OS_386BSD
+    #define GD_OS_GENERIC_BSD
+    #define GD_OS_GENERIC_UNIX
+    #define GD_OS_NAME "386BSD"
+#endif
+
+#if defined(_AIX) || defined(__TOS_AIX__) /* AIX */
     #define GD_OS_AIX
     #define GD_OS_GENERIC_UNIX
     #define GD_OS_NAME "AIX"
+#endif
+
+#ifdef AMIX /* Amiga Unix / AMIX */
+    #define GD_OS_AMIX
+    #define GD_OS_GENERIC_UNIX
+    #define GD_OS_NAME "Amiga Unix"
 #endif
 
 #ifdef __ANDROID__ /* Android */
@@ -236,7 +298,19 @@
     #define GD_OS_NAME "GNU/Hurd"
 #endif
 
-#if defined(__linux__) /* Linux */
+#if defined(_hpux) || defined(hpux) || defined(__hpux) /* HP-UX */
+    #define GD_OS_HPUX
+    #define GD_OS_GENERIC_UNIX
+    #define GD_OS_NAME "HP-UX"
+#endif
+
+#if defined(sgi) || defined(__sgi) /* IRIX */
+    #define GD_OS_IRIX
+    #define GD_OS_GENERIC_UNIX
+    #define GD_OS_NAME "IRIX"
+#endif
+
+#if defined(__linux__) || defined(linux) /* Linux */
     #if !(defined(GD_OS_ANDROID) && GD_ANDROID_IS_NOT_LINUX)
         #define GD_OS_LINUX
         #define GD_OS_GENERIC_UNIX
@@ -246,11 +320,36 @@
     #endif
 #endif
 
-#if defined(__APPLE__) && defined(__MACH__) /* MacOS */
-    /* FIXME: IOS detection */
-    #define GD_OS_MACOS
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(macintosh) || defined(Macintosh) /* MacOS */
+        #define GD_OS_MACOS
+        #define GD_OS_GENERIC_APPLE
+        #define GD_OS_GENERIC_UNIX
+        #define GD_OS_NAME "MacOS"
+#elif defined(__APPLE__) || !defined(GD_NO_EXTERNAL_INCLUDES)
+    #include <TargetConditionals.h>
+    #if TARGET_IPHONE_SIMULATOR
+        #define GD_OS_IPHONE_SIMULATOR
+        #define GD_OS_GENERIC_APPLE
+        #define GD_OS_NAME "IPhone Simulator"
+    #elif TARGET_OS_MACCATALYST
+        #define GD_OS_MACCATALYST
+        #define GD_OS_GENERIC_APPLE
+        #define GD_OS_NAME "Mac Catalyst"
+    #elif TARGET_OS_IPHONE
+        #define GD_OS_IOS
+        #define GD_OS_GENERIC_APPLE
+        #define GD_OS_NAME "iOS"
+    #else
+        #if !GD_NO_CUSTOM_WARNINGS
+            #warning "Unknown architecture"
+        #endif
+    #endif
+#endif
+
+#ifdef __minix /* MINIX */
+    #define GD_OS_MINIX
     #define GD_OS_GENERIC_UNIX
-    #define GD_OS_NAME "MacOS"
+    #define GD_OS_NAME "MINIX"
 #endif
 
 #if defined(MSDOS) || defined(__MSDOS__) || defined(_MSDOS) || defined(__DOS__) /* MS-DOS */
@@ -258,21 +357,38 @@
     #define GD_OS_NAME "MS-DOS"
 #endif
 
-#if __NetBSD__ /* NetBSD */
+#ifdef __NetBSD__ /* NetBSD */
     #define GD_OS_NETBSD
     #define GD_OS_GENERIC_BSD
     #define GD_OS_GENERIC_UNIX
     #define GD_OS_NAME "NetBSD"
 #endif
 
-#if __OpenBSD__ /* OpenBSD */
+#ifdef NeXT /* NeXTSTEP */
+    #define GD_OS_NEXTSTEP
+    #define GD_OS_GENERIC_UNIX
+    #define GD_OS_NAME "NeXTSTEP"
+#endif
+
+#ifdef __OpenBSD__ /* OpenBSD */
     #define GD_OS_OPENBSD
     #define GD_OS_GENERIC_BSD
     #define GD_OS_GENERIC_UNIX
     #define GD_OS_NAME "OpenBSD"
 #endif
 
-#if __serenity__ /* SerenityOS */
+#if defined(OS2) || defined(_OS2) || defined(__OS2__) || defined(__TOS_OS2__) /* OS/2 */
+    #define GD_OS_OS2
+    #define GD_OS_NAME "OS/2"
+#endif
+
+#if defined(EPLAN9) /* Plan 9 */
+    #define GD_OS_PLAN9
+    #define GD_OS_GENERIC_UNIX
+    #define GD_OS_NAME "Plan 9"
+#endif
+
+#ifdef __serenity__ /* SerenityOS */
     #define GD_OS_SERENITY
     #define GD_OS_GENERIC_UNIX
     #define GD_OS_NAME "SerenityOS"
@@ -293,13 +409,13 @@
     #endif
 #endif
 
-#if defined(_WIN16) || defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__)
+#if defined(_WIN16) || defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__) /* Windows */
     #define GD_OS_WINDOWS
     #define GD_OS_NAME "Windows"
 #endif
 
 #ifndef GD_OS_NAME
-    #if defined(__unix__) || defined(unix)
+    #if defined(__unix__) || defined(__unix) || defined(unix) || defined(_POSIX_VERSION) || defined(_XOPEN_VERSION) || defined(_XOPEN_UNIX) /* Generic Unix */
         #define GD_OS_GENERIC_UNIX
         #define GD_OS_NAME "Unknown Unix"
     #else
@@ -317,34 +433,70 @@
 #if defined(__aarch64__) || defined(_M_ARM64) /* AArch64 */
     #define GD_ARCH_AARCH64
     #define GD_ARCH_NAME "AArch64"
+    #define GD_BITS 64
 #endif
 
 #if defined(__alpha__) || defined(__alpha) || defined(_M_ALPHA) /* Alpha */
     #define GD_ARCH_ALPHA
     #define GD_ARCH_NAME "Alpha"
+    #define GD_BITS 64
 #endif
 
 #if defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) \
   || defined(__TARGET_ARCH_THUMB) || defined(_ARM) || defined(_M_ARM) \
-  || defined(_M_ARMT) || defined(__arm) /* ARM */
+  || defined(_M_ARMT) || defined(__arm) || defined(arm) || defined(__arm32__) \
+  || defined(arm32) /* ARM */
     #define GD_ARCH_ARM
     #define GD_ARCH_NAME "ARM"
+    #define GD_BITS 32
+#endif
+
+#if defined(__hppa__) || defined(__HPPA__) || defined(__hppa) /* HPPA */
+    #define GD_ARCH_HPPA
+    #define GD_ARCH_NAME "HPPA"
 #endif
 
 #if defined(__ia64__) || defined(_IA64) || defined(__IA64__) || defined(__ia64) \
  || defined(_M_IA64) || defined(__itanium__) /* Itanium */
     #define GD_ARCH_ITANIUM
     #define GD_ARCH_NAME "Itanium"
+    #define GD_BITS 64
+#endif
+
+#ifdef __loongarch__ /* LoongArch */
+    #define GD_ARCH_LOONGARCH
+    #define GD_ARCH_NAME "LoongArch"
+    #define GD_BITS __loongarch_grlen
 #endif
 
 #if defined(__mips__) || defined(mips) || defined(__mips) || defined(__MIPS__) /* MIPS */
     #define GD_ARCH_MIPS
-    #define GD_ARCH_NAME "MIPS"
+    #if defined(__LP64__) || defined(_LP64)
+        #define GD_ARCH_MIPS64
+        #define GD_ARCH_NAME "MIPS64"
+    #else
+        #define GD_ARCH_MIPS32
+        #define GD_ARCH_NAME "MIPS"
+    #endif
 #endif
 
-#if defined(__m68k__) || defined(M68000) || defined(__MC68K__) || defined(mc68000) /* Motorola 68k */
+#if defined(__m68k__) || defined(M68000) || defined(__MC68K__) || defined(mc68000) || defined(m68k) \
+ || defined(m68) /* Motorola 68k */
     #define GD_ARCH_M68K
     #define GD_ARCH_NAME "Motorola 68k"
+#endif
+
+#if defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) || defined(_ARCH_PPC64) /* PowerPC64 */
+    #define GD_ARCH_POWERPC
+    #define GD_ARCH_POWERPC64
+    #define GD_ARCH_NAME "PowerPC64"
+    #define GD_BITS 64
+#elif defined(__powerpc) || defined(__powerpc__) || defined(__POWERPC__) || defined(__ppc__) \
+   || defined(__PPC__) || defined(_ARCH_PPC) /* PowerPC */
+    #define GD_ARCH_POWERPC
+    #define GD_ARCH_POWERPC32
+    #define GD_ARCH_NAME "PowerPC"
+    #define GD_BITS 32
 #endif
 
 #ifdef __riscv /* RISC-V */
@@ -352,12 +504,12 @@
     #define GD_ARCH_NAME "RISC-V"
     #if defined(__riscv_32len)
         #define GD_ARCH_RISCV32
-        #define GD_ARCH_VERSION 32
         #define GD_ARCH_VERSION_NAME "RISC-V 32"
+        #define GD_BITS 32
     #elif defined(__riscv_64len)
         #define GD_ARCH_RISCV64
-        #define GD_ARCH_VERSION 64
         #define GD_ARCH_VERSION_NAME "RISC-V 64"
+        #define GD_BITS 64
     #endif
 #endif
 
@@ -375,18 +527,31 @@
         #define GD_ARCH_I686
         #define GD_ARCH_VERSION 6
         #define GD_ARCH_VERSION_NAME "i686"
+        #define GD_BITS 32
     #elif defined(__i585__) || _M_IX86 == 500 || __I86__ == 5
         #define GD_ARCH_I586
         #define GD_ARCH_VERSION 5
         #define GD_ARCH_VERSION_NAME "i586"
+        #define GD_BITS 32
     #elif defined(__i486__) || _M_IX86 == 400 || __I86__ == 4
         #define GD_ARCH_I486
         #define GD_ARCH_VERSION 4
         #define GD_ARCH_VERSION_NAME "i486"
+        #define GD_BITS 32
     #elif defined(__i386__) || _M_IX86 == 300 || __I86__ == 3
         #define GD_ARCH_I386
         #define GD_ARCH_VERSION 3
         #define GD_ARCH_VERSION_NAME "i386"
+        #define GD_BITS 32
+    #elif defined(__386__) || defined(_M_I386)
+        #define GD_BITS 32
+    #elif defined(_M_I86)
+        #define GD_BITS 16
+    #else
+        #if !GD_NO_CUSTOM_WARNINGS
+            #warning "Failed to identify x86 bit count, assuming 32..."
+        #endif
+        #define GD_BITS 32
     #endif
 #endif
 
@@ -394,6 +559,7 @@
  || defined(_M_X64) || defined(_M_AMD64) /* x86_64 */
     #define GD_ARCH_X86_64
     #define GD_ARCH_NAME "x86_64"
+    #define GD_BITS 64
 #endif
 
 #ifndef GD_ARCH_NAME
@@ -408,6 +574,16 @@
     #define GD_ARCH_VERSION_NAME ""
 #endif
 
-/* Compiler specific macros */
+#if defined(__LP64__) || defined(_LP64)
+    #ifdef GD_BITS
+        #undef GD_BITS
+    #endif
+
+    #define GD_BITS 64
+#endif
+
+#ifndef GD_BITS
+    #define GD_BITS -1
+#endif
 
 #endif
