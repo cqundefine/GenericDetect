@@ -57,6 +57,7 @@
  *  - AIX:              GD_OS_AIX
  *  - Amiga Unix:       GD_OS_AMIX
  *  - Android:          GD_OS_ANDROID
+ *  - BeOS:             GD_OS_BEOS
  *  - DragonFly BSD:    GD_OS_DRAGONFLY
  *  - FreeBSD:          GD_OS_FREEBSD
  *  - GNU/Hurd:         GD_OS_HURD
@@ -101,6 +102,7 @@
  * Supported architectures:
  *  - AArch64:      GD_ARCH_AARCH64
  *  - Alpha:        GD_ARCH_ALPHA
+ *  - Convex:       GD_ARCH_CONVEX
  *  - ARM:          GD_ARCH_ARM
  *  - HPPA:         GD_ARCH_HPPA
  *  - Itanium:      GD_ARCH_ITANIUM
@@ -278,6 +280,12 @@
     #define GD_OS_NAME "Android"
 #endif
 
+#ifdef __BEOS__ /* BeOS */
+    #define GD_OS_BEOS
+    #define GD_OS_GENERIC_UNIX
+    #define GD_OS_NAME "BeOS"
+#endif
+
 #ifdef __DragonFly__ /* DragonFly BSD */
     #define GD_OS_DRAGONFLY
     #define GD_OS_GENERIC_BSD
@@ -310,7 +318,7 @@
     #define GD_OS_NAME "IRIX"
 #endif
 
-#if defined(__linux__) || defined(linux) /* Linux */
+#if defined(__linux__) || defined(linux) || defined(__linux) /* Linux */
     #if !(defined(GD_OS_ANDROID) && GD_ANDROID_IS_NOT_LINUX)
         #define GD_OS_LINUX
         #define GD_OS_GENERIC_UNIX
@@ -415,7 +423,10 @@
 #endif
 
 #ifndef GD_OS_NAME
-    #if defined(__unix__) || defined(__unix) || defined(unix) || defined(_POSIX_VERSION) || defined(_XOPEN_VERSION) || defined(_XOPEN_UNIX) /* Generic Unix */
+    #if defined(__sysv__) || defined(__SVR4) || defined(__svr4__) || defined(_SYSTYPE_SVR4) /* Generic System V Unix*/
+        #define GD_OS_GENERIC_UNIX
+        #define GD_OS_NAME "Unknown System V Unix"
+    #elif defined(__unix__) || defined(__unix) || defined(unix) || defined(_POSIX_VERSION) || defined(_XOPEN_VERSION) || defined(_XOPEN_UNIX) /* Generic Unix */
         #define GD_OS_GENERIC_UNIX
         #define GD_OS_NAME "Unknown Unix"
     #else
@@ -451,6 +462,11 @@
     #define GD_BITS 32
 #endif
 
+#ifdef __convex__ /* Convex */
+    #define GD_ARCH_CONVEX
+    #define GD_ARCH_NAME "Convex"
+#endif
+
 #if defined(__hppa__) || defined(__HPPA__) || defined(__hppa) /* HPPA */
     #define GD_ARCH_HPPA
     #define GD_ARCH_NAME "HPPA"
@@ -474,14 +490,16 @@
     #if defined(__LP64__) || defined(_LP64)
         #define GD_ARCH_MIPS64
         #define GD_ARCH_NAME "MIPS64"
+        #define GD_BITS 64
     #else
         #define GD_ARCH_MIPS32
         #define GD_ARCH_NAME "MIPS"
+        #define GD_BITS 32
     #endif
 #endif
 
 #if defined(__m68k__) || defined(M68000) || defined(__MC68K__) || defined(mc68000) || defined(m68k) \
- || defined(m68) /* Motorola 68k */
+ || defined(m68) || defined(mc68k) /* Motorola 68k */
     #define GD_ARCH_M68K
     #define GD_ARCH_NAME "Motorola 68k"
 #endif
@@ -520,7 +538,8 @@
 
 #if defined(i386) || defined(__i386) || defined(__i386__) || defined(__IA32__) \
  || defined(_M_I86) || defined(_M_IX86) || defined(__X86__) || defined(_X86_) \
- || defined(__THW_INTEL__) || defined(__I86__) || defined(__INTEL__) || defined(__386) /* x86 */
+ || defined(__THW_INTEL__) || defined(__I86__) || defined(__INTEL__) || defined(__386) \
+ || defined(_I386) || defined(sun386) /* x86 */
     #define GD_ARCH_X86
     #define GD_ARCH_NAME "x86"
     #if defined(__i686__) || _M_IX86 == 600 || __I86__ == 6
@@ -574,11 +593,7 @@
     #define GD_ARCH_VERSION_NAME ""
 #endif
 
-#if defined(__LP64__) || defined(_LP64)
-    #ifdef GD_BITS
-        #undef GD_BITS
-    #endif
-
+#if !defined(GD_BITS) && (defined(__LP64__) || defined(_LP64))
     #define GD_BITS 64
 #endif
 
