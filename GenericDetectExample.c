@@ -6,30 +6,6 @@ int printf(const char*, ...);
 #include <stdio.h>
 #endif
 
-#if defined(GD_OS_GENERIC_UNIX)
-#define UNIX "yes"
-#else
-#define UNIX "no"
-#endif
-
-#if defined(GD_OS_GENERIC_BSD)
-#define BSD "yes"
-#else
-#define BSD "no"
-#endif
-
-#if defined(GD_OS_GENERIC_SUN)
-#define SUN "yes"
-#else
-#define SUN "no"
-#endif
-
-#if defined(GD_OS_GENERIC_APPLE)
-#define APPLE "yes"
-#else
-#define APPLE "no"
-#endif
-
 int main(void)
 {
     printf("GenericDetect machine info:\n");
@@ -40,9 +16,9 @@ int main(void)
     printf("- Compiler: %s\n", GD_COMPILER_NAME);
     printf("- Compiler version: %u.%u.%u\n", GD_COMPILER_VERSION_MAJOR(GD_COMPILER_VERSION), GD_COMPILER_VERSION_MINOR(GD_COMPILER_VERSION), GD_COMPILER_VERSION_PATCH(GD_COMPILER_VERSION));
     printf("- OS type groups:\n");
-    printf("  - Unix: %s\n", UNIX);
-    printf("  - BSD: %s\n", BSD);
-    printf("  - Sun: %s\n", SUN);
-    printf("  - Apple: %s\n", APPLE);
+    printf("  - Unix: %s\n", (GD_IS_OS_UNIX ? "yes" : "no"));
+    printf("  - BSD: %s\n", (GD_IS_OS_BSD ? "yes" : "no"));
+    printf("  - Sun: %s\n", (GD_IS_OS_SUN ? "yes" : "no"));
+    printf("  - Apple: %s\n", (GD_IS_OS_APPLE ? "yes" : "no"));
     return 0;
 }

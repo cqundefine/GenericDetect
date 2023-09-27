@@ -437,6 +437,30 @@
     #endif
 #endif
 
+#if defined(GD_OS_GENERIC_UNIX)
+#define GD_IS_OS_UNIX 1
+#else
+#define GD_IS_OS_UNIX 0
+#endif
+
+#if defined(GD_OS_GENERIC_BSD)
+#define GD_IS_OS_BSD 1
+#else
+#define GD_IS_OS_BSD 0
+#endif
+
+#if defined(GD_OS_GENERIC_SUN)
+#define GD_IS_OS_SUN 1
+#else
+#define GD_IS_OS_SUN 0
+#endif
+
+#if defined(GD_OS_GENERIC_APPLE)
+#define GD_IS_OS_APPLE 1
+#else
+#define GD_IS_OS_APPLE 0
+#endif
+
 /* Archictecture detection */
 
 #define GD_IS_ARCH(arch) (defined(GD_ARCH_##arch))
