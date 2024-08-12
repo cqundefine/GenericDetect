@@ -25,7 +25,13 @@
  * 
  * A simple header only library for detecting stuff like the target operating
  * system, the compiler, etc.
- * 
+ *
+ * Note on versioning:
+ * Every version is normalized into the same format which is: 0xAABBCCCC
+ * (AA - major, BB - minor, CCCC - patch). For creating versions there is
+ * a GD_MAKE_VERSION macro, and for extracting there are GD_VERSION_MAJOR,
+ * GD_VERSION_MINOR and GD_VERSION_PATCH macros.
+ *
  * To check if using a compiler check if any of the macros listed below are
  * defined or use the GD_IS_COMPILER(x) macro with the compiler as a parameter,
  * e.g. GD_IS_COMPILER(GCC) to check for GCC.
@@ -42,11 +48,7 @@
  * For convenience there is a GD_COMPILER_NAME which is defined with the with the
  * name of the used compiler, e.g. GD_COMPILER_NAME is "GCC" is GD_COMPILER_GCC is defined.
  * 
- * Every compiler's version is normalized into the same format which is: 0xAABBCCCC
- * (AA - major, BB - minor, CCCC - patch). For creating versions there is
- * a GD_MAKE_COMPILER_VERSION macro, and for extracting there are
- * GD_COMPILER_VERSION_MAJOR, GD_COMPILER_VERSION_MINOR and GD_COMPILER_VERSION_PATCH
- * macros. Each compiler defines GD_COMPILER_VERSION.
+ * Each compiler defines GD_COMPILER_VERSION.
  * 
  * To check if building for an operating system check if any of the macros
  * listed below are defined or use the GD_IS_OS(x) macro with the operating
@@ -132,12 +134,17 @@
  * 
  * For detecting the bit count of a architecture you can use the GD_BITS macro.
  * 
+ * For the glibc C library there is the GD_LIBC_GLIBC macro defined. There are
+ * also the GD_LIBC_NAME and GC_LIBC_VERSION macros.
+ *
  * Library options:
  *  - GD_ANDROID_IS_NOT_LINUX - do not define GD_OS_LINUX if building for Android
  *  - GD_NO_CUSTOM_WARNINGS - do not use #warning as some compilers / standards
  *    do not support it
  *  - GD_NO_EXTERNAL_INCLUDES - do not include any external headers, might cause
  *    inaccuracies and inability to detect some platfors
+ *  - GD_NO_LIBC_DETECTION - do not try to detect the libc, on some exotic
+ *    platforms this may cause issues
  */
 
 #ifndef GENERIC_DETECT_H_
@@ -158,49 +165,66 @@
 /* Do not use #include */
 #ifndef GD_NO_EXTERNAL_INCLUDES
     #define GD_NO_EXTERNAL_INCLUDES 0
+
+    /* Disallow detecting the LibC without external includes */
+    #ifdef GD_NO_LIBC_DETECTION
+        #if GD_NO_LIBC_DETECTION
+            #if !GD_NOT_CUSTOM_WARNINGS
+                #warning "Detect the LibC is not allowed without external includes"
+            #endif
+        #endif
+        #undef GD_NO_LIBC_DETECTION
+    #endif
+    #define GD_NO_LIBC_DETECTION 0
 #endif
+
+/* Do not detect the LibC */
+#ifndef GD_NO_LIBC_DETECTION
+    #define GD_NO_LIBC_DETECTION 0
+#endif
+
+/* Versioning */
+#define GD_MAKE_VERSION(major,minor,patch) (((major) << 24) + ((minor) << 16) + (patch))
+#define GD_VERSION_MAJOR(version) (version >> 24)
+#define GD_VERSION_MINOR(version) ((version >> 16) & 0xFF)
+#define GD_VERSION_PATCH(version) (version & 0xFFFF)
 
 /* Compiler detection */
 
 #define GD_IS_COMPILER(compiler) (defined(GD_COMPILER_##compiler))
 
-#define GD_MAKE_COMPILER_VERSION(major,minor,patch) (((major) << 24) + ((minor) << 16) + (patch))
-#define GD_COMPILER_VERSION_MAJOR(version) (version >> 24)
-#define GD_COMPILER_VERSION_MINOR(version) ((version >> 16) & 0xFF)
-#define GD_COMPILER_VERSION_PATCH(version) (version & 0xFFFF)
-
 #ifdef __clang__ /* Clang */
     #define GD_COMPILER_CLANG
     #define GD_COMPILER_NAME "Clang"
-    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__clang_major__, __clang_minor__, __clang_patchlevel__)
+    #define GD_COMPILER_VERSION GD_MAKE_VERSION(__clang_major__, __clang_minor__, __clang_patchlevel__)
 #endif
 
 #if defined(__MWERKS__) || defined(__CWCC__) /* CodeWarrior */
     #define GD_COMPILER_CODEWARRIOR
     #define GD_COMPILER_NAME "CodeWarrior"
     #if __MWERKS__ == 1
-        #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(1, 0, 0)
+        #define GD_COMPILER_VERSION GD_MAKE_VERSION(1, 0, 0)
     #else
-        #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__MWERKS__ >> 24, (__MWERKS__ >> 16) & 8, __MWERKS__ & 16)
+        #define GD_COMPILER_VERSION GD_MAKE_VERSION(__MWERKS__ >> 24, (__MWERKS__ >> 16) & 8, __MWERKS__ & 16)
     #endif
 #endif
 
 #ifdef __DMC__ /* Digital Mars */
     #define GD_COMPILER_DIGITALMARS
     #define GD_COMPILER_NAME "Digital Mars"
-    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__DMC__ >> 16, (__DMC__ >> 8) & 8, __DMC__ & 8)
+    #define GD_COMPILER_VERSION GD_MAKE_VERSION(__DMC__ >> 16, (__DMC__ >> 8) & 8, __DMC__ & 8)
 #endif
 
 #ifdef __ghs__ /* Green Hill C/C++ */
     #define GD_COMPILER_GREEN_HILL
     #define GD_COMPILER_NAME "Green Hill C/C++"
-    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__GHS_VERSION_NUMBER__ / 100, (__GHS_VERSION_NUMBER__ / 10) % 10, __GHS_VERSION_NUMBER__ % 10)
+    #define GD_COMPILER_VERSION GD_MAKE_VERSION(__GHS_VERSION_NUMBER__ / 100, (__GHS_VERSION_NUMBER__ / 10) % 10, __GHS_VERSION_NUMBER__ % 10)
 #endif
 
 #if defined(__INTEL_COMPILER) || defined(__ICC) || defined(__ECC) || defined(__ICL) /* ICC */
     #define GD_COMPILER_ICC
     #define GC_COMPILER_NAME "ICC"
-    #define GD_COMPILER_VERSION (__INTEL_COMPILER < 2000 ? GD_MAKE_COMPILER_VERSION(__INTEL_COMPILER / 100, __INTEL_COMPILER % 100, __INTEL_COMPILER_UPDATE) : GD_MAKE_COMPILER_VERSION(__INTEL_COMPILER, __INTEL_COMPILER_UPDATE, 0))
+    #define GD_COMPILER_VERSION (__INTEL_COMPILER < 2000 ? GD_MAKE_VERSION(__INTEL_COMPILER / 100, __INTEL_COMPILER % 100, __INTEL_COMPILER_UPDATE) : GD_MAKE_VERSION(__INTEL_COMPILER, __INTEL_COMPILER_UPDATE, 0))
 #endif
 
 /* NOTE: This is not in order for a reason, because Clang and ICC also define __GNUC__ */
@@ -209,11 +233,11 @@
         #define GD_COMPILER_GCC
         #define GD_COMPILER_NAME "GCC"
         #ifndef __GNUC_MINOR__
-            #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__GNUC__, 0, 0)
+            #define GD_COMPILER_VERSION GD_MAKE_VERSION(__GNUC__, 0, 0)
         #elif !defined(__GNUC_PATCHLEVEL__)
-            #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__GNUC__, __GNUC_MINOR__, 0)
+            #define GD_COMPILER_VERSION GD_MAKE_VERSION(__GNUC__, __GNUC_MINOR__, 0)
         #else
-            #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__)
+            #define GD_COMPILER_VERSION GD_MAKE_VERSION(__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__)
         #endif
     #endif
 #endif
@@ -223,9 +247,9 @@
         #define GD_COMPILER_MSVC
         #define GD_COMPILER_NAME "MSVC"
         #ifdef _MSC_FULL_VER
-            #define GD_COMPILER_VERSION (_MSC_FULL_VER < 100000000 ? GD_MAKE_COMPILER_VERSION(_MSC_FULL_VER / 1000000, (_MSC_FULL_VER % 1000000) / 10000, _MSC_FULL_VER % 10000) : GD_MAKE_COMPILER_VERSION(_MSC_FULL_VER / 10000000, (_MSC_FULL_VER % 10000000) / 10000, _MSC_FULL_VER % 100000))
+            #define GD_COMPILER_VERSION (_MSC_FULL_VER < 100000000 ? GD_MAKE_VERSION(_MSC_FULL_VER / 1000000, (_MSC_FULL_VER % 1000000) / 10000, _MSC_FULL_VER % 10000) : GD_MAKE_VERSION(_MSC_FULL_VER / 10000000, (_MSC_FULL_VER % 10000000) / 10000, _MSC_FULL_VER % 100000))
         #else
-            #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(_MSC_VER / 100, _MSC_VER % 100, 0)
+            #define GD_COMPILER_VERSION GD_MAKE_VERSION(_MSC_VER / 100, _MSC_VER % 100, 0)
         #endif
     #endif
 #endif
@@ -233,7 +257,7 @@
 #if defined(__SDCC) || defined(SDCC) /* SDCC */
     #define GD_COMPILER_SDCC
     #define GD_COMPILER_NAME "SDCC"
-    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(__SDCC_VERSION_MAJOR, __SDCC_VERSION_MINOR, __SDCC_VERSION_PATCH)
+    #define GD_COMPILER_VERSION GD_MAKE_VERSION(__SDCC_VERSION_MAJOR, __SDCC_VERSION_MINOR, __SDCC_VERSION_PATCH)
 #endif
 
 #ifndef GD_COMPILER_NAME
@@ -241,11 +265,11 @@
         #warning "Unknown compiler"
     #endif
     #define GD_COMPILER_NAME "Unknown"
-    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(1, 0, 0)
+    #define GD_COMPILER_VERSION GD_MAKE_VERSION(1, 0, 0)
 #endif
 
 #ifndef GD_COMPILER_VERSION
-    #define GD_COMPILER_VERSION GD_MAKE_COMPILER_VERSION(1, 0, 0)
+    #define GD_COMPILER_VERSION GD_MAKE_VERSION(1, 0, 0)
 #endif
 
 /* OS detection */
@@ -333,7 +357,7 @@
         #define GD_OS_GENERIC_APPLE
         #define GD_OS_GENERIC_UNIX
         #define GD_OS_NAME "MacOS"
-#elif defined(__APPLE__) || !defined(GD_NO_EXTERNAL_INCLUDES)
+#elif defined(__APPLE__) && !GD_NO_EXTERNAL_INCLUDES
     #include <TargetConditionals.h>
     #if TARGET_IPHONE_SIMULATOR
         #define GD_OS_IPHONE_SIMULATOR
@@ -623,6 +647,35 @@
 
 #ifndef GD_BITS
     #define GD_BITS -1
+#endif
+
+/* LibC detection */
+
+#if !GD_NO_LIBC_DETECTION
+#ifndef __has_include
+#define __has_include() 0
+#endif
+
+#if __has_include(<features.h>)
+#include <features.h>
+#else
+#include <limits.h>
+#endif
+
+#if defined(__GLIBC__) || defined(__GNU_LIBRARY__)
+    #define GD_LIBC_GLIBC
+    #define GD_LIBC_NAME "glibc"
+    #ifdef __GLIBC__
+        #define GD_LIBC_VERSION GD_MAKE_VERSION(__GLIBC__, __GLIBC_MINOR__, 0)
+    #else
+        #define GD_LIBC_VERSION GD_MAKE_VERSION(__GNU_LIBRARY__, __GNU_LIBRARY_MINOR__, 0)
+    #endif
+#endif
+#endif
+
+#ifndef GD_LIBC_NAME
+    #define GD_LIBC_NAME "Unknown"
+    #define GD_LIBC_VERSION GD_MAKE_VERSION(1, 0, 0)
 #endif
 
 #endif
