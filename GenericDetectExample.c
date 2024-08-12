@@ -1,3 +1,5 @@
+/* This file is public domain */
+
 #include "GenericDetect.h"
 
 #ifdef NO_EXTERNAL_INCLUDES
